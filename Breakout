@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🔥 Luffy's Ultimate Breakout 🔥</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: black; text-align: center; color: cyan; font-family: Arial; }
+        canvas { display: block; margin: auto; background: #111; }
+        #hud { position: fixed; top: 10px; width: 100%; font-size: 18px; text-shadow: 0 0 10px cyan; }
+        #powerup-status { margin-top: 5px; font-size: 16px; }
+        #progress { width: 200px; height: 10px; background: #222; margin: 10px auto; border-radius: 5px; overflow: hidden; }
+        #progress-bar { width: 0%; height: 100%; background: cyan; transition: width 0.3s; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div id="hud">
+        SCORE: <span id="score">0</span> | LIVES: <span id="lives">3</span>
+        <div id="powerup-status"></div>
+        <div id="progress"><div id="progress-bar"></div></div>
+    </div>
+    <canvas id="game"></canvas>
+
+    <script>
+        // 🎮 Game Setup
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight - 50;
+
+        let score = 0, lives = 3, level = 1;
+        let touchX = null; // For touch movement
+
+        // 🏓 Paddle
+        const paddle = { x: canvas.width / 2 - 50, y: canvas.height - 30, w: 120, h: 15, speed: 8 };
+
+        // 🏀 Ball
+        const ball = { x: canvas.width / 2, y: canvas.height / 2, dx: 4, dy: -4, size: 10 };
+
+        // 🧱 Bricks
+        let bricks = [];
+        function createLevel() {
+            bricks = [];
+            const colors = ["#ff3333", "#ff9933", "#33ff33", "#33ffff"];
+            let brickWidth = canvas.width / 10 - 4;
+            let brickHeight = 25;
+            for (let i = 0; i < 6; i++) {
+                for (let j = 0; j < 10; j++) {
+                    bricks.push({ 
+                        x: j * (brickWidth + 4), 
+                        y: i * (brickHeight + 5) + 50, 
+                        w: brickWidth, 
+                        h: brickHeight, 
+                        color: colors[i % 4], 
+                        health: 2 
+                    });
+                }
+            }
+        }
+        createLevel();
+
+        // 🎮 Touch Controls for Mobile
+        canvas.addEventListener("touchstart", (e) => {
+            touchX = e.touches[0].clientX;
+        });
+
+        canvas.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+            let moveX = e.touches[0].clientX;
+            let deltaX = moveX - touchX;
+            paddle.x += deltaX;
+            paddle.x = Math.max(0, Math.min(canvas.width - paddle.w, paddle.x));
+            touchX = moveX;
+        });
+
+        // 🎬 Game Loop
+        function update() {
+            // Ball Movement
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // Ball Collision - Walls
+            if (ball.x < 0 || ball.x > canvas.width - ball.size) ball.dx *= -1;
+            if (ball.y < 0) ball.dy *= -1;
+
+            // Ball Collision - Paddle
+            if (ball.y > paddle.y - ball.size && ball.x > paddle.x && ball.x < paddle.x + paddle.w) {
+                ball.dy = -Math.abs(ball.dy);
+                ball.dx = ((ball.x - paddle.x) / paddle.w - 0.5) * 10;
+            }
+
+            // Ball Collision - Bricks
+            for (let i = 0; i < bricks.length; i++) {
+                let b = bricks[i];
+                if (b && ball.x > b.x && ball.x < b.x + b.w && ball.y > b.y && ball.y < b.y + b.h) {
+                    ball.dy *= -1;
+                    b.health--;
+                    if (b.health <= 0) bricks.splice(i, 1);
+                    score += 100;
+                    document.getElementById("progress-bar").style.width = `${(score / (bricks.length + 1)) * 100}%`;
+                    break;
+                }
+            }
+
+            // Lose Life / Game Over
+            if (ball.y > canvas.height) {
+                lives--;
+                if (lives <= 0) {
+                    alert(`GAME OVER! Final Score: ${score}\nMade by Luffy with Triyaki, Hazan & Berserk!`);
+                    document.location.reload();
+                } else resetBall();
+            }
+
+            // Level Up
+            if (bricks.length === 0) {
+                level++;
+                alert(`LEVEL UP! Next Stage...`);
+                createLevel();
+                resetBall();
+            }
+
+            // Update HUD
+            document.getElementById("score").textContent = score;
+            document.getElementById("lives").textContent = lives;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Paddle
+            ctx.fillStyle = "cyan";
+            ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+
+            // Draw Ball
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw Bricks
+            bricks.forEach((brick) => {
+                ctx.fillStyle = brick.color;
+                ctx.fillRect(brick.x, brick.y, brick.w, brick.h);
+            });
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.dx = 4;
+            ball.dy = -4;
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🔥 Luffy's Ultimate Breakout 🔥</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: black; text-align: center; color: cyan; font-family: Arial; }
+        canvas { display: block; margin: auto; background: #111; }
+        #hud { position: fixed; top: 10px; width: 100%; font-size: 18px; text-shadow: 0 0 10px cyan; }
+        #powerup-status { margin-top: 5px; font-size: 16px; }
+        #progress { width: 200px; height: 10px; background: #222; margin: 10px auto; border-radius: 5px; overflow: hidden; }
+        #progress-bar { width: 0%; height: 100%; background: cyan; transition: width 0.3s; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div id="hud">
+        SCORE: <span id="score">0</span> | LIVES: <span id="lives">3</span>
+        <div id="powerup-status"></div>
+        <div id="progress"><div id="progress-bar"></div></div>
+    </div>
+    <canvas id="game"></canvas>
+
+    <script>
+        // 🎮 Game Setup
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight - 50;
+
+        let score = 0, lives = 3, level = 1;
+        let touchX = null; // For touch movement
+
+        // 🏓 Paddle
+        const paddle = { x: canvas.width / 2 - 50, y: canvas.height - 30, w: 120, h: 15, speed: 8 };
+
+        // 🏀 Ball
+        const ball = { x: canvas.width / 2, y: canvas.height / 2, dx: 4, dy: -4, size: 10 };
+
+        // 🧱 Bricks
+        let bricks = [];
+        function createLevel() {
+            bricks = [];
+            const colors = ["#ff3333", "#ff9933", "#33ff33", "#33ffff"];
+            let brickWidth = canvas.width / 10 - 4;
+            let brickHeight = 25;
+            for (let i = 0; i < 6; i++) {
+                for (let j = 0; j < 10; j++) {
+                    bricks.push({ 
+                        x: j * (brickWidth + 4), 
+                        y: i * (brickHeight + 5) + 50, 
+                        w: brickWidth, 
+                        h: brickHeight, 
+                        color: colors[i % 4], 
+                        health: 2 
+                    });
+                }
+            }
+        }
+        createLevel();
+
+        // 🎮 Touch Controls for Mobile
+        canvas.addEventListener("touchstart", (e) => {
+            touchX = e.touches[0].clientX;
+        });
+
+        canvas.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+            let moveX = e.touches[0].clientX;
+            let deltaX = moveX - touchX;
+            paddle.x += deltaX;
+            paddle.x = Math.max(0, Math.min(canvas.width - paddle.w, paddle.x));
+            touchX = moveX;
+        });
+
+        // 🎬 Game Loop
+        function update() {
+            // Ball Movement
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // Ball Collision - Walls
+            if (ball.x < 0 || ball.x > canvas.width - ball.size) ball.dx *= -1;
+            if (ball.y < 0) ball.dy *= -1;
+
+            // Ball Collision - Paddle
+            if (ball.y > paddle.y - ball.size && ball.x > paddle.x && ball.x < paddle.x + paddle.w) {
+                ball.dy = -Math.abs(ball.dy);
+                ball.dx = ((ball.x - paddle.x) / paddle.w - 0.5) * 10;
+            }
+
+            // Ball Collision - Bricks
+            for (let i = 0; i < bricks.length; i++) {
+                let b = bricks[i];
+                if (b && ball.x > b.x && ball.x < b.x + b.w && ball.y > b.y && ball.y < b.y + b.h) {
+                    ball.dy *= -1;
+                    b.health--;
+                    if (b.health <= 0) bricks.splice(i, 1);
+                    score += 100;
+                    document.getElementById("progress-bar").style.width = `${(score / (bricks.length + 1)) * 100}%`;
+                    break;
+                }
+            }
+
+            // Lose Life / Game Over
+            if (ball.y > canvas.height) {
+                lives--;
+                if (lives <= 0) {
+                    alert(`GAME OVER! Final Score: ${score}\nMade by Luffy with Triyaki, Hazan & Berserk!`);
+                    document.location.reload();
+                } else resetBall();
+            }
+
+            // Level Up
+            if (bricks.length === 0) {
+                level++;
+                alert(`LEVEL UP! Next Stage...`);
+                createLevel();
+                resetBall();
+            }
+
+            // Update HUD
+            document.getElementById("score").textContent = score;
+            document.getElementById("lives").textContent = lives;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Paddle
+            ctx.fillStyle = "cyan";
+            ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+
+            // Draw Ball
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw Bricks
+            bricks.forEach((brick) => {
+                ctx.fillStyle = brick.color;
+                ctx.fillRect(brick.x, brick.y, brick.w, brick.h);
+            });
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.dx = 4;
+            ball.dy = -4;
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
